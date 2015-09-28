@@ -64,33 +64,34 @@ Upload.prototype._getRandomPath = ->
 ##
 # Generate a random avaiable path on the S3 bucket
 ##
-Upload.prototype._getDestPath = (prefix, callback) ->
+Upload.prototype._getDestPath = (prefix, filename, callback) ->
   retry 5, (cb) =>
     path = prefix + @_getRandomPath() if @opts.generateRandomPath is true
-    path = prefix + @opts.absolutePath if @opts.generateRandomPath is false
+    path = prefix + @opts.absolutePath + filename if @opts.generateRandomPath is false
     @s3.listObjects Prefix: path, (err, data) ->
       return cb err if err
-      return cb null, path if data.Contents.length is 0
-      return cb new Error "Path #{path} not avaiable"
+      return cb null, path
+      #return cb null, path if data.Contents.length is 0
+      #return cb new Error "Path #{path} not avaiable"
   , callback
 
 ##
 # Upload a new image to the S3 bucket
 ##
-Upload.prototype.upload = (src, opts, cb) ->
-  image = new Image src, opts, @
+Upload.prototype.upload = (src, filename, opts, cb) ->
+  image = new Image src, filename, opts, @
   image.start(cb)
 
 ##
 # Image upload
 ##
-Image = module.exports.Image = (@src, @opts, @upload) ->
+Image = module.exports.Image = (@src, @filename, @opts, @upload) ->
   @
 
 Image.prototype.start = (cb) ->
   auto
     metadata: @getMetadata.bind(@, @src)
-    dest: @getDest.bind(@)
+    dest: @getDest.bind(@, @filename)
     versions: ['metadata', @resizeVersions.bind(@)]
     uploads: ['versions', 'dest', @uploadVersions.bind(@)]
     cleanup: ['uploads', @removeVersions.bind(@)]
@@ -106,9 +107,9 @@ Image.prototype.getMetadata = (src, cb) ->
 ##
 # Get image destination
 ##
-Image.prototype.getDest = (cb) ->
+Image.prototype.getDest = (filename, cb) ->
   prefix = @opts?.awsPath or @upload.opts.aws.path
-  @upload._getDestPath prefix, cb
+  @upload._getDestPath prefix, filename, cb
 
 ##
 # Resize image
