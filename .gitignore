@@ -25,3 +25,8 @@ lib/
 *.sublime-workspace
 *.cache
 *.mpc
+
+src/*.js
+src/*.map
+test/*.js
+test/*.map

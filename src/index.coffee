@@ -29,6 +29,8 @@ Upload = module.exports = (bucketName, @opts = {}) ->
 
   @opts.cleanup                 ?= {}
   @opts.returnExif              ?= false
+  @opts.generateRandomPath      ?= true
+  @opts.absolutePath            ?= '/'
 
   @opts.resize                  ?= {}
   #@opts.resize.path
@@ -64,7 +66,8 @@ Upload.prototype._getRandomPath = ->
 ##
 Upload.prototype._getDestPath = (prefix, callback) ->
   retry 5, (cb) =>
-    path = prefix + @_getRandomPath()
+    path = prefix + @_getRandomPath() if @opts.generateRandomPath is true
+    path = prefix + @opts.absolutePath if @opts.generateRandomPath is false
     @s3.listObjects Prefix: path, (err, data) ->
       return cb err if err
       return cb null, path if data.Contents.length is 0
